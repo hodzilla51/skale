@@ -374,3 +374,319 @@ new legal payload / vocabulary per year ↓
 If this occurs while unseen-answer performance remains at or above target, the project has evidence that the apparent complexity of essay preparation contains substantial redundancy.
 
 If it does not occur, preserve the negative result and revise the strong compression hypothesis rather than hiding complexity inside vague model labels.
+
+---
+
+## 13. Reasoning Core mutation accounting
+
+A stable Reasoning Core cannot be inferred from unit count alone.
+
+An eight-operation model that is rewritten every year has not converged merely because the number `8` remains unchanged.
+
+Track at minimum, per year and cumulatively:
+
+```text
+rc_unit_count
+rc_additions
+rc_behavioral_edits
+rc_splits
+rc_merges
+```
+
+A claim such as `RC +0` is incomplete unless the edit / split / merge counts for that year are disclosed with it.
+
+### 13.1 No change
+
+Classify an operation as unchanged only when its practical input type, output type, activation boundary, and executable step remain materially the same.
+
+Different problem facts or different legal payloads do not by themselves constitute an RC change.
+
+### 13.2 Behavioral edit
+
+Classify a change as a `behavioral edit` only when all of the following remain materially the same:
+
+- the operation's input type;
+- the operation's output type;
+- its position as one human-executable cognitive step.
+
+An edit may change or sharpen internal decision criteria, trigger conditions, suppressors, or routing rules inside that same step.
+
+### 13.3 Split
+
+Classify a change as a `split` when a previously single operation must now expose two or more independently meaningful executable stages.
+
+Strong split signals include:
+
+- the input or output type changes;
+- a new intermediate representation must be produced;
+- one new stage can activate independently of the other;
+- one stage must produce an output that a second stage consumes;
+- the learner must reliably perform two distinct cognitive actions rather than one sharpened judgment.
+
+Example shape:
+
+```text
+old:
+  route challenge to rule-level or application-level review
+
+new candidate:
+  partition multiple challenged measures
+  → then route each measure to rule-level or application-level review
+```
+
+This must not automatically be called an edit merely to preserve unit count.
+
+### 13.4 Addition
+
+Classify a change as an `addition` when the new executable operation cannot be represented as an edit or split of an existing operation without changing the existing operation beyond recognition.
+
+### 13.5 Merge
+
+Classify a change as a `merge` only when two or more previously distinct executable operations can be replaced by one human-executable operation without loss of answer quality, activation reliability, or runtime performance.
+
+### 13.6 Conservative tie-break rule
+
+If a change is genuinely ambiguous between `edit` and `split`, classify it as `split` until evidence justifies the narrower edit classification.
+
+This rule deliberately biases against artificially stable RC counts.
+
+### 13.7 Convergence signal
+
+Reasoning convergence requires more than stable unit count.
+
+A stronger signal is:
+
+```text
+rc additions ↓
+rc edits ↓
+rc splits ↓
+while frozen-model prediction performance remains adequate
+```
+
+A stable count with persistent mutation is evidence that the representation is still moving.
+
+---
+
+## 14. Prospective test protocol and preregistration
+
+Beginning with 2010, SKALE should separate model fitting from teacher-signal testing as much as the historical dataset allows.
+
+### Phase A — Freeze before opening the problem
+
+Before inspecting the target year's problem, commit the current versions of:
+
+- Reasoning Core;
+- Legal Knowledge Payload;
+- Legal Output Vocabulary;
+- Residual set;
+- deploy representation if one exists.
+
+The commit is the model version under test.
+
+Do not edit that version after seeing the target problem and still describe the resulting performance as frozen-model generalization.
+
+### Phase B — Problem-only prediction
+
+Open the problem text but do not inspect the official question intent, grading commentary, examiner commentary, model answers, or analyses derived from them.
+
+Before opening teacher signals, commit a prediction artifact containing at minimum:
+
+```text
+predicted_rc_path
+predicted_major_issues
+predicted_required_payload
+predicted_unnecessary_or_suppressed_branches
+predicted_answer_skeleton
+explicit_failure_conditions
+```
+
+The purpose is to create a falsifiable prediction, not a flexible note that can later be interpreted as approximately correct.
+
+### 14.1 Explicit failure conditions
+
+The Phase B artifact must state in advance what observations would count as a miss.
+
+Examples:
+
+```text
+- If official intent treats X as a major required issue and the prediction omitted X, count a major-issue false negative.
+- If the official analytical sequence requires B before A and the frozen model materially depends on A before B, count an ordering miss.
+- If a legal payload unit is necessary to generate the expected analysis and was not predicted / available, count a payload false negative.
+- If the prediction marks a branch as necessary but official signals show it is materially irrelevant or affirmatively discouraged, count a branch / payload false positive where appropriate.
+- If correct handling requires a new reasoning operation or a split not available in the frozen RC, count an RC miss.
+```
+
+Failure conditions should be concrete enough that Phase C cannot rescue a prediction merely by saying it was "basically similar."
+
+### Phase C — Open teacher signals and score
+
+Only after Phase B is committed may the official question intent and grading commentary be opened.
+
+Record mismatches under explicit categories such as:
+
+```text
+major_issue_false_negative
+major_issue_false_positive
+ordering_miss
+payload_false_negative
+payload_false_positive
+vocabulary_gap
+rc_miss
+fact_evaluation_miss
+```
+
+A model revision performed after Phase C is a fit to that year. It may improve the model, but the revised model must earn new generalization evidence on a later untouched year.
+
+---
+
+## 15. Payload and vocabulary novelty rates
+
+Absolute cumulative size is not enough to show saturation.
+
+For each year, measure the proportion of that year's required units that were genuinely new to the pre-year frozen model.
+
+### Payload novelty rate
+
+```text
+payload_novelty_rate
+= new_payload_units
+  / (new_payload_units + reused_payload_units_required_this_year)
+```
+
+### Vocabulary novelty rate
+
+```text
+vocabulary_novelty_rate
+= new_vocabulary_items
+  / (new_vocabulary_items + reused_vocabulary_items_required_this_year)
+```
+
+These denominators count units actually required by the target year, not every unit accumulated historically.
+
+Track both yearly novelty rate and cumulative model size.
+
+A linearly growing payload with persistently high novelty is evidence against the strong compression hypothesis even if the Reasoning Core appears stable.
+
+If novelty remains high after several years, first consider whether the domain is genuinely information-heavy. Only then consider whether unit granularity is too fine. Do not merge units merely because the curve is disappointing.
+
+---
+
+## 16. Merge freeze and evidence rule
+
+Payload, vocabulary, residual, or RC units must not be merged opportunistically in response to model growth.
+
+A merge candidate remains separate until the following minimum evidence exists:
+
+1. the candidate shared inference path has appeared in at least **three independent training years**;
+2. it has appeared across at least **two materially different fact patterns**;
+3. the proposed common representation uses the same mediating legal reason or executable inference path rather than merely a broad thematic similarity;
+4. no unresolved counterexample requires the units to remain distinct;
+5. the merged representation preserves answer quality and does not make human activation materially slower or less reliable.
+
+Until these conditions are satisfied, count the units separately even if a common parent concept appears plausible.
+
+### 16.1 Merge-candidate record
+
+Every merge candidate must record:
+
+```text
+candidate_units
+proposed_parent_or_shared_representation
+why_they_might_be_the_same
+shared_mediating_reason_or_inference_path
+known_differences
+supporting_years
+supporting_fact_patterns
+counterexamples_or_open_questions
+```
+
+The field `why_they_might_be_the_same` is mandatory. Later review should be able to distinguish a genuine common inference path from an earlier temptation to group concepts because they sounded related.
+
+### 16.2 Parent concept does not imply merge
+
+Two units may share a broad parent concept and still require separate learner-facing payloads.
+
+For example, several doctrines may relate to personal autonomy while controlling different objects, relationships, or legal questions. The existence of the parent `autonomy` is not itself evidence that the child units can be executed as one rule.
+
+The merge test is functional, not thematic.
+
+### 16.3 Gross additions must never be rewritten
+
+When a validated merge later reduces the current model size, preserve historical growth.
+
+Track separately:
+
+```text
+gross_additions_to_date
+validated_merges_to_date
+current_net_model_size
+```
+
+A later merge must not retroactively erase the fact that earlier years introduced separately necessary units at the time.
+
+---
+
+## 17. Anti-hindsight reporting dashboard
+
+For every year from 2010 onward, report at minimum:
+
+```text
+REASONING
+  frozen RC unit count
+  RC additions
+  RC behavioral edits
+  RC splits
+  RC merges
+  prediction misses by category
+
+LEGAL PAYLOAD
+  reused required units
+  new units
+  yearly novelty rate
+  cumulative gross additions
+  validated merges
+  current net size
+
+VOCABULARY
+  reused required labels
+  new labels
+  yearly novelty rate
+  cumulative gross additions
+  validated merges
+  current net size
+
+RESIDUALS
+  new
+  reused
+  absorbed by validated representation
+
+GENERALIZATION
+  frozen-model result before teacher signals
+```
+
+Do not collapse these into a single weighted compression score unless a defensible common scale is later developed.
+
+The experiment should make it easy to see an unfavorable pattern.
+
+Examples of unfavorable but valuable results include:
+
+- stable RC count but persistent edits / splits;
+- good issue prediction but continually high payload novelty;
+- declining novelty only because post-hoc merges are being performed;
+- compact external model that is too abstract to activate under exam time;
+- good fit after teacher signals but weak pre-signal prediction.
+
+---
+
+## 18. Transitional rule for the 2009 delta
+
+The 2009 compression delta was measured before the mutation taxonomy and preregistration protocol in Sections 13–17 were fixed.
+
+Therefore:
+
+- its reported `RC +0` is **exploratory evidence**, not preregistered generalization evidence;
+- its three reported RC refinements must be re-audited under the new `edit / split / addition` rules before being used in a convergence series;
+- the original 2009 record must remain preserved even if reclassification changes the metrics;
+- the first prospective historical-year test under the new protocol should begin with 2010.
+
+This prevents later rules from being silently applied only when they improve the appearance of compression.
